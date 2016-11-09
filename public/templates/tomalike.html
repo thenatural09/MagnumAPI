@@ -1,0 +1,13 @@
+<a href="#/upload">upload new tom</a>
+<h2>Tom-a-likes</h2>
+<ul>
+    <li ng-repeat="tom in tomalikes">
+        <img ng-src="{{ tom.filename }}" />
+        <p>From {{ tom.user.name }}, {{ tom.votes }} votes</p>
+        <p>{{ tom.comment }}</p>
+        <p>
+            <button ng-click="fav(tom, true)">Up</button>
+            <button ng-click="fav(tom, false)">Down</button>    
+        </p>
+    </li>
+</ul>
