@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.HashMap;
 
 /**
  * Created by Troy on 11/9/16.
@@ -43,11 +47,39 @@ public class MagnumApiController {
     }
 
     @RequestMapping(path="tomalikes",method = RequestMethod.POST)
-    public void addTomalike(HttpSession session, String comment, MultipartFile photo) throws Exception {
+    public void addTomalike(HttpSession session, String comment, MultipartFile photo, HttpServletResponse response) throws Exception {
         String name = (String) session.getAttribute("name");
         if (name == null) {
             throw new Exception("Not logged in");
         }
         User user = users.findFirstByName(name);
+        File dir = new File("public");
+        dir.mkdirs();
+
+        File photoFile = File.createTempFile("photo",photo.getOriginalFilename(), dir);
+        FileOutputStream fos = new FileOutputStream(photoFile);
+        fos.write(photo.getBytes());
+
+        TomALike tom = new TomALike(photoFile.getName(),comment,0,user);
+        toms.save(tom);
+        response.sendRedirect("/#/tomalikes");
     }
+
+
+    @RequestMapping (path = "favs", method = RequestMethod.POST)
+    public void addFav(HttpSession session, @RequestBody HashMap fav) throws Exception {
+        String name = (String) session.getAttribute("name");
+        if (name == null) {
+            throw new Exception("Not logged in");
+        }
+        Integer id = (Integer) fav.get("tomId");
+        Boolean looksLikeTom = (Boolean) fav.get("looksLikeTom");
+        if (id == null || looksLikeTom == null) {
+            throw new Exception("Invalid request body");
+        }
+        TomALike tom = toms.findOne(id);
+        tom.setVotes(tom.getVotes() + (looksLikeTom ? 1 : -1));
+        toms.save(tom);
+    }
+
 }
